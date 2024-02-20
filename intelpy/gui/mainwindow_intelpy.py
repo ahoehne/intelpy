@@ -1,6 +1,5 @@
-from PyQt5.QtCore import pyqtSlot, QTimer, QThreadPool, QDir, Qt
+from PyQt5.QtCore import pyqtSlot, QTimer, QThreadPool, QDir
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QWidget, QMessageBox
-from PyQt5.QtGui import QPalette, QColor
 from intelpy.gui.MainWindow import Ui_MainWindow
 from pathlib import Path
 import getpass
@@ -8,14 +7,13 @@ import intelpy.logging.logformatting as log
 import intelpy.eve.eveloghandler_worker as eveloghandler
 from intelpy.eve.eveloghandler_signals import EveworkerSignals
 import threading
-import intelpy.gui.playalert_worker as playalertworker
+import intelpy.gui.playalertworker as playalertworker
 import time
 from datetime import datetime
 from collections import deque
 import os
 import shutil
-import random
-import intelpy.logging.logger
+
 
 class MainWindow(QMainWindow, Ui_MainWindow, QWidget):
     def __init__(self, configuration, eve_data, logger=None, *args, **kwargs):
@@ -86,7 +84,6 @@ class MainWindow(QMainWindow, Ui_MainWindow, QWidget):
         self.clearLogButton.clicked.connect(self.clear_log)
         self.addChannelAddButton.clicked.connect(self.add_channel)
         self.removeChannelButton.clicked.connect(lambda: self.remove_channel(self.channelListWidget.selectedItems()))
-
 
         # Advanced config
         self.pushButtonChoose_alarm_Location.clicked.connect(self.choose_alarm_location)
@@ -182,7 +179,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, QWidget):
             return False
 
     def archive_old_logs_windows(self):
-        # When on Windows, archive old chat logs so we aren't dealing with them. Linux will handle it
+        # When on Windows, archive old chat logs, to don't deal with them. Linux will handle it
         # automatically via watchdog
         if self.configuration.value["debug"] and self.logger:
             print("Archiving old logs (Windows)")
@@ -225,7 +222,6 @@ class MainWindow(QMainWindow, Ui_MainWindow, QWidget):
                     print("Log file was in use while archiving, probably by Eve. Skipping file")
                     self.logger.write_log("Log file was in use while archiving, probably by Eve. Skipping file")
                 continue
-                #raise
 
         if self.configuration.value["debug"] and self.logger:
             print("Archive found " + str(files_found_count) + " files.")
@@ -253,7 +249,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, QWidget):
         self.label_recentalert4.setText("")
         self.label_recentalert5.setText("")
         if len(self.recent_alerts) == 0:
-            return   # no alerts
+            return  # no alerts
         # pop off old alert
         if self.recent_alerts[0][0] > self.configuration.value["alert_timeout"] * 60:
             self.recent_alerts.popleft()
@@ -365,7 +361,8 @@ class MainWindow(QMainWindow, Ui_MainWindow, QWidget):
         # Convert to readable names
         self.update_alert_systems()
         if self.configuration.value["debug"] and self.logger:
-            self.logger.write_log("Alert set to " + str(slider_value) + " jumps from " + self.configuration.value["home_system"])
+            self.logger.write_log(
+                "Alert set to " + str(slider_value) + " jumps from " + self.configuration.value["home_system"])
 
     def update_alert_systems(self):
         self.alert_system_names_readable.clear()
@@ -427,7 +424,8 @@ class MainWindow(QMainWindow, Ui_MainWindow, QWidget):
             self.configuration.value["home_system"] = new_home
             self.lineEditHome_System.setText(new_home)
             self.append_log(log.format_important("Home set to: " + self.configuration.value["home_system"]))
-            self.generate_neigbourhood(self.horizontalSlider_AlertJumps.value(), self.configuration.value["home_system"])
+            self.generate_neigbourhood(self.horizontalSlider_AlertJumps.value(),
+                                       self.configuration.value["home_system"])
             self.configuration.flush_config_to_file()
             self.update_alert_systems()
         else:
@@ -505,7 +503,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, QWidget):
 
     @pyqtSlot(list)
     def message_ready_process(self, message_list):
-        #here we can check alerts, update UI etc
+        # here we can check alerts, update UI etc
         # message_list =  dts, nick, message
         this_message = message_list[2]
         this_message = this_message.upper()
@@ -538,8 +536,8 @@ class MainWindow(QMainWindow, Ui_MainWindow, QWidget):
                     self.append_log(log.format_important("<font color=\"red\">Message: </font>" + message_list[2]))
 
                 # play alert (blocking on Linux so threading it)
-                alert_worker = playalertworker.PlayAlert_worker(self.configuration, self.logger)
-                alert_worker.start()   # chucking away once done
+                alert_worker = playalertworker.PlayAlertWorker(self.configuration, self.logger)
+                alert_worker.start()  # chucking away once done
 
                 # get id codes
                 system_id = self.eve_data.get_id_code(system)
@@ -556,10 +554,3 @@ class MainWindow(QMainWindow, Ui_MainWindow, QWidget):
         if self.configuration.value["display_all"]:
             self.append_log("<b> > </b> " + log.format_info(str(message_list[0])))
             self.append_log(log.format_info(message_list[2]))
-
-
-
-
-
-
-

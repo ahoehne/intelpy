@@ -1,29 +1,31 @@
+"""Module providing a threaded worker process to play alert sounds"""
 from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QMessageBox
 import playsound
 
 
-class PlayAlert_worker(QThread):
-    def __init__(self, configuration, logger=None, *args, **kwargs):
-        super(PlayAlert_worker, self).__init__(*args, **kwargs)
+class PlayAlertWorker(QThread):
+    """Class providing a threaded worker process to play alert sounds"""
+    def __init__(self, configuration, logger=None):
+        super(PlayAlertWorker, self).__init__()
         # Watchdog
         self.configuration = configuration
         self.logger = logger
 
     def run(self):
+        """plays the alert sound"""
         alarm_sound = self.configuration.value["alarm_sound"]
         try:
             playsound.playsound(alarm_sound)
         except FileNotFoundError as e:
-            if self.logger:
-                self.logger.write_log("Error: Could not play alert sound! File not found.", str(e))
-            self.error_diag("Error: Could not play alert sound! File not found.", str(e))
+            self.handle_error("Error: Could not play alert sound! File not found.", str(e))
         except Exception as e:
-            if self.logger:
-                self.logger.write_log("Error: Could not play alert sound!", str(e))
-            self.error_diag("Error: Could not play alert sound!", str(e))
+            self.handle_error("Error: Could not play alert sound!", str(e))
 
-    def error_diag(self, message, error):
+    def handle_error(self, message, error):
+        """unified error handling"""
+        if self.logger:
+            self.logger.write_log(message, error)
         msg_dialog = QMessageBox()
         msg_dialog.setWindowTitle("Alert sound error")
         msg_dialog.setText(message)
